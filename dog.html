@@ -1,0 +1,139 @@
+<html>
+<head>
+<script>
+/*
+ * Define our list of dogs as an array of dog objects.
+ * NOTE: This is Javascript Object Literal notation, not JSON.
+ * For it to be valid JSON, the property names would also have to be quoted: "id":"gsd".
+ */
+var dogs = [
+	{
+		id: 'gsd',
+		name: 'German Shepherd',
+		personality: 'extrovert',
+		size: 'small'
+	},
+	{
+		id: 'yorkie',
+		name: 'Yorkshire Terrier',
+		personality: 'extrovert',
+		size: 'small'
+	},
+	,
+	{
+		id: 'sd',
+		name: 'Sausage Dog',
+		personality: 'introvert',
+		size: 'small'
+	}
+];
+
+// Filter callback function to filter dogs list based on attributes.
+// When we call it we'll pass a "this" object into it, which will be parameters
+// that we want to filter on.
+function filter(element, index, array) {
+	console.log(this);	// <- "this" is a special object in JS.
+	
+	var result = true;
+	if (this.personality != "") {
+		console.log("P");
+		console.log(element.personality == this.personality);
+		result = result && (element.personality == this.personality);
+	}
+	if (this.size != "") {
+		console.log("S");
+		console.log((element.size == this.size))
+		result = result && (element.size == this.size);
+	}
+	return result;
+}
+
+var noresult = null;
+
+/**
+ * Generate an HTML element for each dog that was found, and add it to results area (clearing it first).
+ * This will also handle rendering a case where no results were found.
+ */
+function render(items, firsttime = false) {
+	var resultarea = document.getElementById('results');
+	// Just prove we got the result area.
+	console.debug(resultarea);
+	// Could just set .innerHTML, but this doesn't remove any event handlers that may have been
+	// attached so this is a bad practice to get into.
+	while (resultarea.firstChild) {
+		resultarea.removeChild(resultarea.firstChild);
+	}
+	if (items.length > 0) {		
+		items.forEach(n => {
+			var dog = document.createElement("div");
+			dog.classList.add('dog');
+			dog.innerHTML = "<h3>"+n.name+"</h3><div><label>Size:</label>" +n.size + "</div><div><label>Personality:</label>" +n.personality + "</div>";
+			resultarea.appendChild(dog);
+		});
+	} else {
+		if (!firsttime) {
+			if (noresult === null) {	// Check if noresult has already been created.
+				// If it hasn't create it but keep reference.
+				// This means we don't keep creating a new element every time and cause memory leaks.
+				noresult = document.createElement("div");
+				noresult.innerHTML = "No dog met your criteria";
+			}
+			resultarea.appendChild(noresult);
+		}
+	}
+}
+
+
+/**
+ * Entry point into the script. 
+ * 
+ * This is fired once the page has loaded, so we can attach event listeners to elements that should now exist.
+ */
+function init() {
+	console.log("loading dog");
+	// We can also do a render of the full dog list from the start.
+	render(dogs, true);
+	
+	// We hook on to the dog form's on submit event (i.e. when a input type="submit" is clicked).
+	document.getElementById('dogform').addEventListener('submit', (event) => {
+		// Stop the form submitting to the server, as we're going to handle everything via Javascript.
+		event.preventDefault();
+		console.debug(event);
+		console.log("Finding dogs");
+		
+		selector = '';
+		
+		// Create an object from the form's elements that has the values we want to filter on.
+		
+		var filterparams = {
+			personality: document.getElementById('personality').value,
+			size: document.getElementById('size').value
+		}
+		
+		// The 1st param is the filter call back, defined above.
+		// The 2nd param is the object that can be referred to via "this" in the filter callback,
+		// so this lets us pass data in to the callback.
+		var results = dogs.filter(filter, filterparams);
+		// Just dump the results out for sanity.
+		console.debug(results);
+		render(results);
+	});
+}
+
+// Wait until page is loaded and then initialise things.
+addEventListener('load', (event) => {
+	init();
+});
+</script>
+</head>
+<body>
+	<form id="dogform">
+		<div>Personality <select id="personality"><option value=""></option><option value="extrovert">Extrovert</option><option value="introvert">Introvert</option></select></div>
+		<div>Size <select id="size"><option value=""></option><option value="small">small</option><option value="large">Large</option></select></div>
+		<div><input type="submit" value="Find" /></div>
+	</form>
+	<!-- This will be the rea that matching dogs are displayed -->
+	<div id="results"></div>
+
+</body>
+</html>
